@@ -1,0 +1,6 @@
+{
+  "name": "SIPENGAWAS SMP GARUT",
+  "description": "Sistem Informasi Kepengawasan Sekolah Menengah Pertama Kabupaten Garut untuk pengawasan akademik, manajerial, pemantauan, evaluasi, dan tindak lanjut.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
