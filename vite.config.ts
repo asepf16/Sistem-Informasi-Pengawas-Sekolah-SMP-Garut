@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: '/Sistem-Informasi-Pengawas-Sekolah-SMP-Garut/',
+    base: '/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
