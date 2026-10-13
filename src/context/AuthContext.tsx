@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (identifier === 'admin') {
-      password = 'AdminGarut2026!';
+      password = 'sipengawas2106';
     } else if (identifier === 'kadis') {
       password = 'KadisGarut2026!';
     } else {

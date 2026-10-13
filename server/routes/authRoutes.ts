@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { db } from '../db.js';
+import { db, ensureDemoAccountsInMemory } from '../db.js';
 import {
   hashPassword,
   verifyPassword,
@@ -13,6 +13,9 @@ export const authRouter = Router();
 
 // POST /api/auth/login
 authRouter.post('/login', (req, res: Response): void => {
+  // Always guarantee in-memory demo accounts exist before processing authentication
+  ensureDemoAccountsInMemory();
+
   const { identifier, password } = req.body;
 
   if (!identifier || !password) {
@@ -33,6 +36,12 @@ authRouter.post('/login', (req, res: Response): void => {
     else if (identifier === 'pengawas3' && activeSupervisors[2]) user = activeSupervisors[2];
   }
 
+  // Fallback for admin if somehow user is still null
+  if (!user && (identifier.toLowerCase() === 'admin' || identifier.toLowerCase() === 'asepfirdausy16@dinas.belajar.id')) {
+    ensureDemoAccountsInMemory();
+    user = db.users.findByUsername('admin');
+  }
+
   if (!user) {
     res.status(401).json({
       success: false,
@@ -49,11 +58,19 @@ authRouter.post('/login', (req, res: Response): void => {
     return;
   }
 
-  // Allow standard demo master passwords for easy role testing or verify standard password
+  // Allow standard demo master passwords (including sipengawas2106) for easy testing or verify password hash
   const isDemoMasterPass =
-    (user.role === 'supervisor' && password === 'Pengawas123!') ||
-    (user.role === 'admin' && (password === 'AdminGarut2026!' || password === 'Pengawas123!')) ||
-    (user.role === 'kadis' && (password === 'KadisGarut2026!' || password === 'Pengawas123!'));
+    (user.role === 'admin' &&
+      (password === 'sipengawas2106' ||
+       password === 'AdminGarut2026!' ||
+       password === 'Pengawas123!')) ||
+    (user.role === 'supervisor' &&
+      (password === 'Pengawas123!' ||
+       password === 'sipengawas2106')) ||
+    (user.role === 'kadis' &&
+      (password === 'KadisGarut2026!' ||
+       password === 'Pengawas123!' ||
+       password === 'sipengawas2106'));
 
   const isValid = isDemoMasterPass || verifyPassword(password, user.passwordHash, user.salt);
   if (!isValid) {
@@ -82,6 +99,7 @@ authRouter.post('/login', (req, res: Response): void => {
 
 // POST /api/auth/quick-login - Instant 1-click login for role testing
 authRouter.post('/quick-login', (req, res: Response): void => {
+  ensureDemoAccountsInMemory();
   const { identifier, userId, role } = req.body;
   let user: any;
 
@@ -181,6 +199,7 @@ authRouter.post('/change-password', authenticate, (req: AuthenticatedRequest, re
 
 // GET /api/auth/demo-accounts - Returns active users with public metadata for role switcher
 authRouter.get('/demo-accounts', (_req, res: Response): void => {
+  ensureDemoAccountsInMemory();
   const users = db.users
     .find((u) => u.isActive)
     .map((u) => ({

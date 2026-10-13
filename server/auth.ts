@@ -31,8 +31,7 @@ export function verifyPassword(password: string, hash: string, salt: string): bo
   }
 }
 
-// In-memory active session store with TTL (backed by server uptime)
-// Tokens are opaque secure random hex strings
+// In-memory active session store with TTL + Serverless Stateless HMAC support
 interface SessionData {
   userId: string;
   createdAt: number;
@@ -43,12 +42,17 @@ const sessions = new Map<string, SessionData>();
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export function createSessionToken(userId: string): string {
-  const token = crypto.randomBytes(32).toString('hex');
   const now = Date.now();
+  const expiresAt = now + SESSION_TTL_MS;
+  const payloadStr = JSON.stringify({ userId, createdAt: now, expiresAt });
+  const payloadB64 = Buffer.from(payloadStr).toString('base64url');
+  const signature = crypto.createHmac('sha256', SECRET_KEY).update(payloadB64).digest('base64url');
+  const token = `${payloadB64}.${signature}`;
+
   sessions.set(token, {
     userId,
     createdAt: now,
-    expiresAt: now + SESSION_TTL_MS,
+    expiresAt,
   });
   return token;
 }
@@ -58,18 +62,51 @@ export function removeSessionToken(token: string): void {
 }
 
 export function getUserByToken(token: string): User | null {
+  if (!token) return null;
+
+  // 1. Check in-memory session cache first
   const session = sessions.get(token);
-  if (!session) return null;
-  if (Date.now() > session.expiresAt) {
-    sessions.delete(token);
-    return null;
+  if (session) {
+    if (Date.now() > session.expiresAt) {
+      sessions.delete(token);
+      return null;
+    }
+    const user = db.users.findById(session.userId);
+    if (!user || !user.isActive) {
+      sessions.delete(token);
+      return null;
+    }
+    return user;
   }
-  const user = db.users.findById(session.userId);
-  if (!user || !user.isActive) {
-    sessions.delete(token);
-    return null;
+
+  // 2. Serverless stateless token verification (HMAC signed)
+  // Ensures user stays authenticated across multiple serverless lambda instances on Vercel
+  try {
+    const parts = token.split('.');
+    if (parts.length === 2) {
+      const [payloadB64, signature] = parts;
+      const expectedSig = crypto.createHmac('sha256', SECRET_KEY).update(payloadB64).digest('base64url');
+      if (crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))) {
+        const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8'));
+        if (payload.expiresAt && Date.now() <= payload.expiresAt && payload.userId) {
+          const user = db.users.findById(payload.userId);
+          if (user && user.isActive) {
+            // Re-populate in-memory session cache
+            sessions.set(token, {
+              userId: payload.userId,
+              createdAt: payload.createdAt || Date.now(),
+              expiresAt: payload.expiresAt,
+            });
+            return user;
+          }
+        }
+      }
+    }
+  } catch {
+    // Invalid token format or HMAC mismatch
   }
-  return user;
+
+  return null;
 }
 
 // Middleware: Require Authentication

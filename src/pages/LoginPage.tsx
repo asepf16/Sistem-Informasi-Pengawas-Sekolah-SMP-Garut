@@ -303,7 +303,7 @@ export const LoginPage: React.FC = () => {
                   type="button"
                   disabled={loading}
                   onClick={() =>
-                    handleQuickLogin('admin', 'AdminGarut2026!', 'Administrator')
+                    handleQuickLogin('admin', 'sipengawas2106', 'Administrator')
                   }
                   className="w-full p-3 bg-purple-50/80 hover:bg-purple-100 border border-purple-200 rounded-xl text-left transition flex items-center justify-between group"
                 >
@@ -409,7 +409,7 @@ export const LoginPage: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setIdentifier('admin');
-                    setPassword('AdminGarut2026!');
+                    setPassword('sipengawas2106');
                     setErrorMessage('');
                   }}
                   className="p-2 text-left bg-slate-50 hover:bg-purple-50 hover:text-purple-900 border border-slate-200 hover:border-purple-200 rounded-lg transition"
