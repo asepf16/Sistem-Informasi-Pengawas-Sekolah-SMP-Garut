@@ -46,21 +46,59 @@ export const Navbar: React.FC<NavbarProps> = ({
     fetchDemoAccounts();
   }, [user]);
 
-  const getAccountByUsername = (username: string, fallbackName: string, fallbackRank: string) => {
-    const acc = demoAccounts.find((a) => a.username === username);
-    return {
-      fullName: acc?.fullName || fallbackName,
-      jabatanLevel: acc?.jabatanLevel || fallbackRank,
-      pangkatGolongan: acc?.pangkatGolongan || '',
-      nip: acc?.nip || '',
-    };
+  const adminAccount = demoAccounts.find((a) => a.role === 'admin') || {
+    fullName: 'Asep Saepulloh F. S.Ag.,M.Pd',
+    jabatanLevel: 'Ahli Utama',
+    username: 'admin',
   };
 
-  const adminAccount = getAccountByUsername('admin', 'Asep Saepulloh F. S.Ag.,M.Pd', 'Ahli Utama');
-  const pengawas1Account = getAccountByUsername('pengawas1', 'Dr. Jajang Supriatna, S.Pd., M.Pd.', 'Ahli Utama');
-  const pengawas2Account = getAccountByUsername('pengawas2', 'Dr. Endang Kasupardi, M.Pd.', 'Ahli Madya');
-  const pengawas3Account = getAccountByUsername('pengawas3', 'H. Tony Syafari Surpriatna', 'Ahli Madya');
-  const kadisAccount = getAccountByUsername('kadis', 'H. Asep Wawan Budiman, S.Pd.,M.Si', 'Pembina Utama Muda');
+  const kadisAccount = demoAccounts.find((a) => a.role === 'kadis') || {
+    fullName: 'H. Asep Wawan Budiman, S.Pd.,M.Si',
+    jabatanLevel: 'Eksekutif',
+    username: 'kadis',
+  };
+
+  const defaultSupervisors = [
+    {
+      id: 'sup-1',
+      username: 'kasupardiendang',
+      fullName: 'Dr. Endang Kasupardi, M.Pd',
+      nip: '197121061998021004',
+      pangkatGolongan: 'Pembina Tingkat 1',
+      jabatanLevel: 'Ahli Madya',
+      role: 'supervisor',
+    },
+    {
+      id: 'sup-2',
+      username: 'supriatnajajang',
+      fullName: 'Dr. Jajang Supriatna,S.Pd,.M.Pd',
+      nip: '-',
+      pangkatGolongan: 'Pembina Utama Madya ( IV D)',
+      jabatanLevel: 'Ahli Utama',
+      role: 'supervisor',
+    },
+    {
+      id: 'sup-3',
+      username: 'syafaritony',
+      fullName: 'H. Tony Syafari Sutisna, S,Pd.,M.Pd',
+      nip: '-',
+      pangkatGolongan: 'Pembina Utama Muda (IV c)',
+      jabatanLevel: 'Ahli Madya',
+      role: 'supervisor',
+    },
+    {
+      id: 'sup-4',
+      username: 'purnamaalambudi',
+      fullName: 'H. Budi Purnama Alam, S.Pd.,M.Pd',
+      nip: '-',
+      pangkatGolongan: 'Pembina Utama Muda (IVC)',
+      jabatanLevel: 'Ahli Madya',
+      role: 'supervisor',
+    },
+  ];
+
+  const liveSupervisors = demoAccounts.filter((a) => a.role === 'supervisor');
+  const supervisorAccounts = liveSupervisors.length > 0 ? liveSupervisors : defaultSupervisors;
 
   const handleConfirmLogout = async () => {
     setIsLoggingOut(true);
@@ -193,92 +231,58 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </span>
                 </button>
 
-                {/* 2. Pengawas 1 */}
-                <button
-                  type="button"
-                  onClick={() => handleQuickSwitch('supervisor', 1, 'pengawas1', `Pengawas SMP 1 (${pengawas1Account.fullName})`)}
-                  className={`w-full text-left px-3.5 py-2.5 text-xs flex items-center justify-between hover:bg-blue-50/80 transition ${
-                    user?.role === 'supervisor' && user?.username === 'pengawas1'
-                      ? 'bg-blue-50 font-semibold border-l-4 border-blue-600'
-                      : 'text-slate-700'
-                  }`}
-                >
-                  <div className="min-w-0 pr-2">
-                    <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                      <span>Pengawas SMP 1</span>
-                      {user?.username === 'pengawas1' && (
-                        <span className="text-[9px] bg-blue-600 text-white px-1.5 py-0.2 rounded-full font-bold">Aktif</span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-blue-900 font-semibold truncate mt-0.5">
-                      {pengawas1Account.fullName}
-                    </div>
-                    <div className="text-[10px] text-slate-500">
-                      {pengawas1Account.jabatanLevel || 'Ahli Utama'} &bull; Sekolah Binaan
-                    </div>
-                  </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold shrink-0">
-                    Pengawas
-                  </span>
-                </button>
+                {/* 2. Daftar Pengawas Sekolah SMP (Dinamis Sesuai Data Aktif) */}
+                {supervisorAccounts.map((sup: any, idx: number) => {
+                  const isKorwas =
+                    sup.fullName?.toLowerCase().includes('endang') ||
+                    sup.fullName?.toLowerCase().includes('kasupardi');
+                  const isCurrent =
+                    user?.username === sup.username ||
+                    (user?.role === 'supervisor' && user?.fullName === sup.fullName);
 
-                {/* 3. Pengawas 2 */}
-                <button
-                  type="button"
-                  onClick={() => handleQuickSwitch('supervisor', 2, 'pengawas2', `Pengawas SMP 2 (${pengawas2Account.fullName})`)}
-                  className={`w-full text-left px-3.5 py-2.5 text-xs flex items-center justify-between hover:bg-indigo-50/80 transition ${
-                    user?.role === 'supervisor' && user?.username === 'pengawas2'
-                      ? 'bg-indigo-50 font-semibold border-l-4 border-indigo-600'
-                      : 'text-slate-700'
-                  }`}
-                >
-                  <div className="min-w-0 pr-2">
-                    <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                      <span>Pengawas SMP 2</span>
-                      {user?.username === 'pengawas2' && (
-                        <span className="text-[9px] bg-indigo-600 text-white px-1.5 py-0.2 rounded-full font-bold">Aktif</span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-indigo-900 font-semibold truncate mt-0.5">
-                      {pengawas2Account.fullName}
-                    </div>
-                    <div className="text-[10px] text-slate-500">
-                      {pengawas2Account.jabatanLevel || 'Ahli Madya'} &bull; Sekolah Binaan
-                    </div>
-                  </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold shrink-0">
-                    Pengawas
-                  </span>
-                </button>
-
-                {/* 4. Pengawas 3 */}
-                <button
-                  type="button"
-                  onClick={() => handleQuickSwitch('supervisor', 3, 'pengawas3', `Pengawas SMP 3 (${pengawas3Account.fullName})`)}
-                  className={`w-full text-left px-3.5 py-2.5 text-xs flex items-center justify-between hover:bg-cyan-50/80 transition ${
-                    user?.role === 'supervisor' && user?.username === 'pengawas3'
-                      ? 'bg-cyan-50 font-semibold border-l-4 border-cyan-600'
-                      : 'text-slate-700'
-                  }`}
-                >
-                  <div className="min-w-0 pr-2">
-                    <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                      <span>Pengawas SMP 3</span>
-                      {user?.username === 'pengawas3' && (
-                        <span className="text-[9px] bg-cyan-600 text-white px-1.5 py-0.2 rounded-full font-bold">Aktif</span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-cyan-900 font-semibold truncate mt-0.5">
-                      {pengawas3Account.fullName}
-                    </div>
-                    <div className="text-[10px] text-slate-500">
-                      {pengawas3Account.jabatanLevel || 'Ahli Madya'} &bull; Sekolah Binaan
-                    </div>
-                  </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-100 text-cyan-800 font-bold shrink-0">
-                    Pengawas
-                  </span>
-                </button>
+                  return (
+                    <button
+                      key={sup.id || sup.username || idx}
+                      type="button"
+                      onClick={() =>
+                        handleQuickSwitch('supervisor', idx + 1, sup.username, `${sup.fullName}`)
+                      }
+                      className={`w-full text-left px-3.5 py-2.5 text-xs flex items-center justify-between hover:bg-blue-50/80 transition ${
+                        isCurrent
+                          ? 'bg-blue-50 font-semibold border-l-4 border-blue-600'
+                          : 'text-slate-700'
+                      }`}
+                    >
+                      <div className="min-w-0 pr-2">
+                        <div className="font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                          <span>
+                            {isKorwas ? 'Korwas SMP' : `Pengawas SMP ${idx + 1}`}
+                          </span>
+                          {isCurrent && (
+                            <span className="text-[9px] bg-blue-600 text-white px-1.5 py-0.2 rounded-full font-bold">
+                              Aktif
+                            </span>
+                          )}
+                          {isKorwas && (
+                            <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">
+                              Koordinator
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-blue-900 font-semibold truncate mt-0.5">
+                          {sup.fullName}
+                        </div>
+                        <div className="text-[10px] text-slate-500 truncate">
+                          {sup.nip && sup.nip !== '-' ? `NIP. ${sup.nip} • ` : ''}
+                          {sup.jabatanLevel || 'Ahli Madya'} &bull; {sup.pangkatGolongan || 'Sekolah Binaan'}
+                        </div>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold shrink-0">
+                        Pengawas
+                      </span>
+                    </button>
+                  );
+                })}
 
                 {/* 5. Kadis */}
                 <button

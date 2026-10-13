@@ -71,7 +71,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Quick login helper for demonstration and test scenarios
-  const quickLoginAs = async (role: UserRole, index = 1, username?: string) => {
+  const quickLoginAs = async (role: UserRole, index = 1, username?: string, userId?: string) => {
+    try {
+      const res = await api.post('/api/auth/quick-login', {
+        role,
+        identifier: username,
+        userId,
+      });
+      if (res.success && res.token && res.user) {
+        tokenStorage.set(res.token);
+        setUser(res.user);
+        return;
+      }
+    } catch {
+      // Fallback to credential login if quick endpoint has issues
+    }
+
     let identifier = username || '';
     let password = '';
 

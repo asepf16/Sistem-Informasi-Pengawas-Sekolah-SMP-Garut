@@ -48,22 +48,67 @@ export const LoginPage: React.FC = () => {
     }).catch(() => {});
   }, []);
 
-  // Helper to get live user or fallback
-  const getUserDisplay = (username: string, fallbackName: string, fallbackRank: string) => {
-    const found = demoUsers.find((u) => u.username === username);
-    return {
-      fullName: found?.fullName || fallbackName,
-      jabatanLevel: found?.jabatanLevel || fallbackRank,
-      pangkatGolongan: found?.pangkatGolongan || '',
-      nip: found?.nip || '',
-    };
+  // Live accounts resolution
+  const adminUser = demoUsers.find((u) => u.role === 'admin');
+  const kadisUser = demoUsers.find((u) => u.role === 'kadis');
+  const liveSupervisors = demoUsers.filter((u) => u.role === 'supervisor');
+
+  const adminInfo = {
+    fullName: adminUser?.fullName || 'Asep Saepulloh F. S.Ag.,M.Pd',
+    jabatanLevel: adminUser?.jabatanLevel || 'Ahli Utama',
+    pangkatGolongan: adminUser?.pangkatGolongan || 'Pembina Utama Muda (IV/c)',
+    nip: adminUser?.nip || '197006211997021006',
+    username: adminUser?.username || 'admin',
   };
 
-  const adminInfo = getUserDisplay('admin', 'Asep Saepulloh F. S.Ag.,M.Pd', 'Ahli Utama');
-  const kadisInfo = getUserDisplay('kadis', 'H. Asep Wawan Budiman, S.Pd.,M.Si', 'Pembina Utama Muda');
-  const pengawas1Info = getUserDisplay('pengawas1', 'Dr. Jajang Supriatna, S.Pd., M.Pd.', 'Ahli Utama');
-  const pengawas2Info = getUserDisplay('pengawas2', 'Dr. Endang Kasupardi, M.Pd.', 'Ahli Madya');
-  const pengawas3Info = getUserDisplay('pengawas3', 'H. Tony Syafari Surpriatna', 'Ahli Madya');
+  const kadisInfo = {
+    fullName: kadisUser?.fullName || 'H. Asep Wawan Budiman, S.Pd.,M.Si',
+    jabatanLevel: kadisUser?.jabatanLevel || 'Eksekutif',
+    pangkatGolongan: kadisUser?.pangkatGolongan || 'Pembina Utama Muda (IV C)',
+    nip: kadisUser?.nip || '197207061998021001',
+    username: kadisUser?.username || 'kadis',
+  };
+
+  const defaultSupervisors = [
+    {
+      id: 'sup-1',
+      username: 'kasupardiendang',
+      fullName: 'Dr. Endang Kasupardi, M.Pd',
+      nip: '197121061998021004',
+      pangkatGolongan: 'Pembina Tingkat 1',
+      jabatanLevel: 'Ahli Madya',
+      isKorwas: true,
+    },
+    {
+      id: 'sup-2',
+      username: 'supriatnajajang',
+      fullName: 'Dr. Jajang Supriatna,S.Pd,.M.Pd',
+      nip: '-',
+      pangkatGolongan: 'Pembina Utama Madya ( IV D)',
+      jabatanLevel: 'Ahli Utama',
+      isKorwas: false,
+    },
+    {
+      id: 'sup-3',
+      username: 'syafaritony',
+      fullName: 'H. Tony Syafari Sutisna, S,Pd.,M.Pd',
+      nip: '-',
+      pangkatGolongan: 'Pembina Utama Muda (IV c)',
+      jabatanLevel: 'Ahli Madya',
+      isKorwas: false,
+    },
+    {
+      id: 'sup-4',
+      username: 'purnamaalambudi',
+      fullName: 'H. Budi Purnama Alam, S.Pd.,M.Pd',
+      nip: '-',
+      pangkatGolongan: 'Pembina Utama Muda (IVC)',
+      jabatanLevel: 'Ahli Madya',
+      isKorwas: false,
+    },
+  ];
+
+  const displayedSupervisors = liveSupervisors.length > 0 ? liveSupervisors : defaultSupervisors;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -279,85 +324,51 @@ export const LoginPage: React.FC = () => {
                   <LogIn className="w-4 h-4 text-purple-700 opacity-70 group-hover:opacity-100 transition shrink-0" />
                 </button>
 
-                {/* 2. Pengawas 1 */}
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() =>
-                    handleQuickLogin('pengawas1', 'Pengawas123!', 'Pengawas SMP 1')
-                  }
-                  className="w-full p-3 bg-blue-50/80 hover:bg-blue-100 border border-blue-200 rounded-xl text-left transition flex items-center justify-between group"
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-xs text-blue-950">Pengawas SMP 1</span>
-                      <span className="bg-blue-200 text-blue-800 text-[10px] font-bold px-1.5 py-0.2 rounded">
-                        {pengawas1Info.jabatanLevel || 'Ahli Utama'}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-blue-900 font-bold mt-0.5">
-                      {pengawas1Info.fullName}
-                    </div>
-                    <div className="text-[10px] text-blue-700">
-                      Wewenang: Sekolah binaan SMP di Garut, susun rencana, input kegiatan & tindak lanjut
-                    </div>
-                  </div>
-                  <LogIn className="w-4 h-4 text-blue-700 opacity-70 group-hover:opacity-100 transition shrink-0" />
-                </button>
+                {/* 2. Dynamic Supervisor Accounts */}
+                {displayedSupervisors.map((sup, idx) => {
+                  const isKorwas =
+                    sup.isKorwas ||
+                    sup.fullName.toLowerCase().includes('endang') ||
+                    sup.fullName.toLowerCase().includes('kasupardi');
+                  return (
+                    <button
+                      key={sup.id || sup.username || idx}
+                      type="button"
+                      disabled={loading}
+                      onClick={() =>
+                        handleQuickLogin(sup.username, 'Pengawas123!', sup.fullName)
+                      }
+                      className="w-full p-3 bg-blue-50/80 hover:bg-blue-100 border border-blue-200 rounded-xl text-left transition flex items-center justify-between group"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-xs text-blue-950">
+                            {isKorwas ? 'Koordinator Pengawas SMP' : `Pengawas SMP ${idx + 1}`}
+                          </span>
+                          <span className="bg-blue-200 text-blue-800 text-[10px] font-bold px-1.5 py-0.2 rounded">
+                            {sup.jabatanLevel || 'Pengawas SMP'}
+                          </span>
+                          {isKorwas && (
+                            <span className="bg-amber-200 text-amber-900 text-[10px] font-bold px-1.5 py-0.2 rounded">
+                              Koordinator
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-blue-900 font-bold mt-0.5">
+                          {sup.fullName}
+                        </div>
+                        <div className="text-[10px] text-blue-700">
+                          {sup.nip && sup.nip !== '-' ? `NIP. ${sup.nip} • ` : ''}
+                          {sup.pangkatGolongan ? `${sup.pangkatGolongan} • ` : ''}
+                          Sekolah binaan SMP di Garut
+                        </div>
+                      </div>
+                      <LogIn className="w-4 h-4 text-blue-700 opacity-70 group-hover:opacity-100 transition shrink-0" />
+                    </button>
+                  );
+                })}
 
-                {/* 3. Pengawas 2 */}
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() =>
-                    handleQuickLogin('pengawas2', 'Pengawas123!', 'Pengawas SMP 2')
-                  }
-                  className="w-full p-3 bg-indigo-50/80 hover:bg-indigo-100 border border-indigo-200 rounded-xl text-left transition flex items-center justify-between group"
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-xs text-indigo-950">Pengawas SMP 2</span>
-                      <span className="bg-indigo-200 text-indigo-800 text-[10px] font-bold px-1.5 py-0.2 rounded">
-                        {pengawas2Info.jabatanLevel || 'Ahli Madya'}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-indigo-900 font-bold mt-0.5">
-                      {pengawas2Info.fullName}
-                    </div>
-                    <div className="text-[10px] text-indigo-700">
-                      Wewenang: Sekolah binaan mandiri, pemantauan & tindak lanjut terisolasi
-                    </div>
-                  </div>
-                  <LogIn className="w-4 h-4 text-indigo-700 opacity-70 group-hover:opacity-100 transition shrink-0" />
-                </button>
-
-                {/* 4. Pengawas 3 */}
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() =>
-                    handleQuickLogin('pengawas3', 'Pengawas123!', 'Pengawas SMP 3')
-                  }
-                  className="w-full p-3 bg-cyan-50/80 hover:bg-cyan-100 border border-cyan-200 rounded-xl text-left transition flex items-center justify-between group"
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-xs text-cyan-950">Pengawas SMP 3</span>
-                      <span className="bg-cyan-200 text-cyan-800 text-[10px] font-bold px-1.5 py-0.2 rounded">
-                        {pengawas3Info.jabatanLevel || 'Ahli Madya'}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-cyan-900 font-bold mt-0.5">
-                      {pengawas3Info.fullName}
-                    </div>
-                    <div className="text-[10px] text-cyan-700">
-                      Wewenang: Pembinaan manajerial & akademik sekolah binaan
-                    </div>
-                  </div>
-                  <LogIn className="w-4 h-4 text-cyan-700 opacity-70 group-hover:opacity-100 transition shrink-0" />
-                </button>
-
-                {/* 5. Kepala Dinas */}
+                {/* 3. Kepala Dinas */}
                 <button
                   type="button"
                   disabled={loading}
@@ -377,7 +388,7 @@ export const LoginPage: React.FC = () => {
                       {kadisInfo.fullName}
                     </div>
                     <div className="text-[10px] text-amber-700">
-                      Wewenang: Dashboard eksekutif, pantau kinerja seluruh pengawas & sekolah se-Garut
+                      {kadisInfo.nip ? `NIP. ${kadisInfo.nip} • ` : ''}Dashboard eksekutif, pantau kinerja seluruh pengawas & sekolah se-Garut
                     </div>
                   </div>
                   <LogIn className="w-4 h-4 text-amber-700 opacity-70 group-hover:opacity-100 transition shrink-0" />
@@ -409,26 +420,42 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setIdentifier('pengawas1');
+                    const korwas = displayedSupervisors.find(
+                      (s) =>
+                        s.fullName.toLowerCase().includes('endang') ||
+                        s.fullName.toLowerCase().includes('kasupardi')
+                    ) || displayedSupervisors[0];
+                    setIdentifier(korwas?.username || 'kasupardiendang');
                     setPassword('Pengawas123!');
                     setErrorMessage('');
                   }}
                   className="p-2 text-left bg-slate-50 hover:bg-blue-50 hover:text-blue-900 border border-slate-200 hover:border-blue-200 rounded-lg transition"
                 >
-                  <div className="font-bold text-blue-900 truncate">Pengawas 1</div>
-                  <div className="text-[10px] text-slate-500 truncate">Dr. Jajang S.</div>
+                  <div className="font-bold text-blue-900 truncate">Korwas SMP</div>
+                  <div className="text-[10px] text-slate-500 truncate">Dr. Endang K.</div>
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    setIdentifier('pengawas2');
+                    const otherSup = displayedSupervisors.find(
+                      (s) =>
+                        !s.fullName.toLowerCase().includes('endang') &&
+                        !s.fullName.toLowerCase().includes('kasupardi')
+                    ) || displayedSupervisors[1];
+                    setIdentifier(otherSup?.username || 'supriatnajajang');
                     setPassword('Pengawas123!');
                     setErrorMessage('');
                   }}
                   className="p-2 text-left bg-slate-50 hover:bg-indigo-50 hover:text-indigo-900 border border-slate-200 hover:border-indigo-200 rounded-lg transition"
                 >
-                  <div className="font-bold text-indigo-900 truncate">Pengawas 2</div>
-                  <div className="text-[10px] text-slate-500 truncate">Dr. Endang K.</div>
+                  <div className="font-bold text-indigo-900 truncate">Pengawas</div>
+                  <div className="text-[10px] text-slate-500 truncate">
+                    {displayedSupervisors.find(
+                      (s) =>
+                        !s.fullName.toLowerCase().includes('endang') &&
+                        !s.fullName.toLowerCase().includes('kasupardi')
+                    )?.fullName.split(' ')[0] || 'Pengawas'}
+                  </div>
                 </button>
                 <button
                   type="button"
@@ -440,7 +467,7 @@ export const LoginPage: React.FC = () => {
                   className="p-2 text-left bg-slate-50 hover:bg-amber-50 hover:text-amber-900 border border-slate-200 hover:border-amber-200 rounded-lg transition"
                 >
                   <div className="font-bold text-amber-900 truncate">Kadis</div>
-                  <div className="text-[10px] text-slate-500 truncate">H. Asep W.</div>
+                  <div className="text-[10px] text-slate-500 truncate">{kadisInfo.fullName.split(' ')[0]}</div>
                 </button>
               </div>
             </div>
